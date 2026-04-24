@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "aws-opensearch-logs": {
+      "command": "python",
+      "args": [
+        "/Users/bjsttlp314/IdeaProjects/mcp-in-action/mcp-demo/server/aws_opensearch_mcp_server.py"
+      ],
+      "env": {}
+    }
+  }
+}

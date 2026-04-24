@@ -24,9 +24,17 @@ from typing import Any, Dict, List, Optional, Union
 import asyncio
 import httpx
 import os
+import logging
 from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
 from pathlib import Path
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # 加载 .env 文件中的环境变量
 dotenv_path = Path(__file__).resolve().parents[1] / '.env'
@@ -57,11 +65,13 @@ async def make_qweather_request(endpoint: str, params: Dict[str, Any]) -> Option
     
     async with httpx.AsyncClient() as client:
         try:
+            logger.info(f"请求和风天气 API: {url}")
             response = await client.get(url, params=params, timeout=30.0)
             response.raise_for_status()
+            logger.info(f"API 请求成功")
             return response.json()
         except Exception as e:
-            print(f"API 请求错误: {e}")
+            logger.error(f"API 请求错误: {e}")
             return None
 
 def format_warning(warning: Dict[str, Any]) -> str:
@@ -108,19 +118,24 @@ async def get_weather_warning(location: Union[str, int]) -> str:
         "lang": "zh"
     }
     
-    data = await make_qweather_request("warning/now", params)
-    
+    data = await make_qweather_request("v7/warning/now", params)
+    logger.info("返回数据{data}")
+        
     if not data:
+        logger.warning(f"无法获取位置 {location} 的预警信息")
         return "无法获取预警信息或API请求失败。"
     
     if data.get("code") != "200":
+        logger.error(f"API 返回错误代码: {data.get('code')}")
         return f"API 返回错误: {data.get('code')}"
     
     warnings = data.get("warning", [])
     
     if not warnings:
+        logger.info(f"位置 {location} 没有活动预警")
         return f"当前位置 {location} 没有活动预警。"
     
+    logger.info(f"获取到 {len(warnings)} 条预警信息")
     formatted_warnings = [format_warning(warning) for warning in warnings]
     return "\n---\n".join(formatted_warnings)
 
@@ -174,28 +189,32 @@ async def get_daily_forecast(location: Union[str, int], days: int = 3) -> str:
         "lang": "zh"
     }
     
-    endpoint = f"weather/{days}d"
+    endpoint = f"v7/weather/{days}d"
     data = await make_qweather_request(endpoint, params)
     
     if not data:
+        logger.warning(f"无法获取位置 {location} 的天气预报")
         return "无法获取天气预报或API请求失败。"
     
     if data.get("code") != "200":
+        logger.error(f"API 返回错误代码: {data.get('code')}")
         return f"API 返回错误: {data.get('code')}"
     
     daily_forecasts = data.get("daily", [])
     
     if not daily_forecasts:
+        logger.warning(f"无法获取位置 {location} 的预报数据")
         return f"无法获取 {location} 的天气预报数据。"
     
+    logger.info(f"获取到 {len(daily_forecasts)} 天天气预报")
     formatted_forecasts = [format_daily_forecast(daily) for daily in daily_forecasts]
     return "\n---\n".join(formatted_forecasts)
 
 if __name__ == "__main__":
-    print("正在启动 MCP 天气服务器...")
-    print("提供工具: get_weather_warning, get_daily_forecast")
-    print("请确保环境变量 QWEATHER_API_KEY 已设置")
-    print("使用 Ctrl+C 停止服务器")
+    logger.info("正在启动 MCP 天气服务器...")
+    logger.info("提供工具: get_weather_warning, get_daily_forecast")
+    logger.info("请确保环境变量 QWEATHER_API_KEY 已设置")
+    logger.info("使用 Ctrl+C 停止服务器")
     
     # 初始化并运行服务器
     mcp.run(transport='stdio') 

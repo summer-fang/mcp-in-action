@@ -295,7 +295,7 @@ class MCPClient:
                     tools=available_tools,
                     tool_choice="auto" # 允许模型决定是否调用工具
                 )
-
+                logger.info(f"模型生成了回复: {response}")
                 content = response.choices[0].message
                 finish_reason = response.choices[0].finish_reason
 
