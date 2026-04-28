@@ -16,6 +16,7 @@ import logging
 import traceback
 from typing import Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
 
 # 配置日志
 logging.basicConfig(
@@ -195,6 +196,7 @@ if __name__ == "__main__":
 
     # 创建客户端
     client = AWSOpenSearchClient(base_url)
+    COOKIES_FILE = Path(__file__).parent.parent / "opensearch_cookies.json"
 
     # 方式1：设置 cookie 字符串（从浏览器开发者工具复制）
     cookie_string = """
@@ -204,7 +206,7 @@ if __name__ == "__main__":
 
     # 方式2：从 opensearch_cookies.json 加载 cookies
     try:
-        with open('../opensearch_cookies.json', 'r') as f:
+        with open(COOKIES_FILE, 'r') as f:
             cookies_list = json.load(f)
             # 转换为字典格式
             cookies = {cookie['name']: cookie['value'] for cookie in cookies_list}

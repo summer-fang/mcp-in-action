@@ -241,7 +241,7 @@ async def get_cookies_only():
 
         # 额外等待确保 Cognito tokens 完全设置
         print("⏳ 等待 AWS Cognito tokens 加载...")
-        await asyncio.sleep(50)
+        await asyncio.sleep(60)
 
         # 检查关键 cookies 是否存在
         max_retries = 10

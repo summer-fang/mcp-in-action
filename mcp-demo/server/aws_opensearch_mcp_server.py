@@ -17,6 +17,8 @@ import json
 import logging
 import requests
 import traceback
+import subprocess
+import sys
 from pathlib import Path
 from typing import Optional, Dict, Any
 from mcp.server.fastmcp import FastMCP
@@ -153,6 +155,65 @@ class AWSOpenSearchClient:
 
 # 全局客户端实例（懒加载）
 _aws_opensearch_client = None
+# Cookie刷新脚本路径
+COOKIE_REFRESH_SCRIPT = Path(__file__).parent.parent / "server" / "aws_opensearch_auto.py"
+PYTHON_VENV = Path(__file__).parent.parent / "venv_mcp_demo" / "bin" / "python"
+
+
+def refresh_cookies() -> bool:
+    """
+    自动运行cookies刷新脚本
+
+    返回:
+        True: 刷新成功
+        False: 刷新失败
+    """
+    try:
+        logger.info("=" * 80)
+        logger.info("🔄 检测到 cookies 过期，正在自动刷新...")
+        logger.info(f"执行脚本: {COOKIE_REFRESH_SCRIPT}")
+        logger.info("=" * 80)
+
+        # 执行刷新脚本（选项1：获取cookies）
+        process = subprocess.Popen(
+            [str(PYTHON_VENV), "-u", str(COOKIE_REFRESH_SCRIPT)],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        # 自动输入选项1（获取cookies）
+        stdout, stderr = process.communicate(input="1\n", timeout=300)
+
+        logger.info("刷新脚本输出:")
+        logger.info(stdout)
+
+        if stderr:
+            logger.warning(f"刷新脚本错误输出: {stderr}")
+
+        # 检查cookies文件是否更新成功
+        if COOKIES_FILE.exists():
+            logger.info("✅ Cookies 文件已更新，重新加载客户端...")
+            return True
+        else:
+            logger.error("❌ Cookies 文件未生成")
+            return False
+
+    except subprocess.TimeoutExpired:
+        logger.error("❌ Cookies 刷新超时（5分钟）")
+        process.kill()
+        return False
+    except Exception as e:
+        logger.error(f"❌ 刷新 cookies 失败: {e}")
+        logger.error(traceback.format_exc())
+        return False
+
+
+def reload_client():
+    """重新加载客户端（清除缓存）"""
+    global _aws_opensearch_client
+    _aws_opensearch_client = None
 
 
 def get_aws_opensearch_client() -> AWSOpenSearchClient:
@@ -211,13 +272,38 @@ def search_aws_logs(
         )
 
         if not result:
-            return (
-                f"搜索失败或 API 请求出错。\n"
-                f"可能原因：\n"
-                f"1. Cookies 已过期，请运行 aws_opensearch_auto.py 重新获取\n"
-                f"2. 网络连接问题\n"
-                f"3. 索引模式不存在"
-            )
+            logger.warning("首次搜索失败，尝试自动刷新 cookies...")
+
+            # 自动刷新cookies
+            if refresh_cookies():
+                # 重新加载客户端
+                reload_client()
+                client = get_aws_opensearch_client()
+
+                # 重试搜索
+                logger.info("重新尝试搜索...")
+                result = client.search(
+                    query=query,
+                    index_pattern=index_pattern,
+                    size=size,
+                    time_from=time_from
+                )
+
+                if not result:
+                    return (
+                        f"❌ 刷新 cookies 后仍然搜索失败\n"
+                        f"可能原因：\n"
+                        f"1. 网络连接问题\n"
+                        f"2. 索引模式不存在: {index_pattern}\n"
+                        f"3. OpenSearch 服务异常"
+                    )
+            else:
+                return (
+                    f"❌ 搜索失败且无法自动刷新 cookies\n"
+                    f"请手动运行以下命令获取 cookies：\n"
+                    f"python {COOKIE_REFRESH_SCRIPT}\n"
+                    f"然后重试搜索"
+                )
 
         # 提取搜索结果
         hits = result.get('rawResponse', {}).get('hits', {}).get('hits', [])
@@ -312,7 +398,39 @@ def search_aws_logs_by_time(
         )
 
         if not result:
-            return "搜索失败，请检查 cookies 是否有效或重新获取"
+            logger.warning("首次搜索失败，尝试自动刷新 cookies...")
+
+            # 自动刷新cookies
+            if refresh_cookies():
+                # 重新加载客户端
+                reload_client()
+                client = get_aws_opensearch_client()
+
+                # 重试搜索
+                logger.info("重新尝试搜索...")
+                result = client.search(
+                    query=query,
+                    index_pattern=index_pattern,
+                    size=size,
+                    time_from=time_from,
+                    time_to=time_to
+                )
+
+                if not result:
+                    return (
+                        f"❌ 刷新 cookies 后仍然搜索失败\n"
+                        f"可能原因：\n"
+                        f"1. 网络连接问题\n"
+                        f"2. 索引模式不存在: {index_pattern}\n"
+                        f"3. OpenSearch 服务异常"
+                    )
+            else:
+                return (
+                    f"❌ 搜索失败且无法自动刷新 cookies\n"
+                    f"请手动运行以下命令获取 cookies：\n"
+                    f"python {COOKIE_REFRESH_SCRIPT}\n"
+                    f"然后重试搜索"
+                )
 
         # 使用相同的格式化逻辑
         hits = result.get('rawResponse', {}).get('hits', {}).get('hits', [])
