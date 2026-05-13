@@ -448,8 +448,8 @@ def search_aws_logs_by_time(
             timestamp = source.get('@timestamp', '未知时间')
             message = source.get('log', source.get('Message', source.get('message', '无消息内容')))
 
-            if len(message) > 800:
-                message = message[:800] + "\n... (已截断)"
+            if len(message) > 10000:
+                message = message[:10000] + "\n... (已截断)"
 
             results.append(f"\n📋 [{i}/{len(hits)}] {timestamp}")
             results.append(f"   📝 {message}")
