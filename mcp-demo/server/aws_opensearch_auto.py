@@ -15,10 +15,47 @@ Date: 2025.05.03
 import json
 import asyncio
 import os
+import sys
+from pathlib import Path
 from playwright.async_api import async_playwright
 
+SCRIPT_DIR = Path(__file__).parent
 
-async def search_with_auto_login(query: str, username: str, password: str):
+# 环境配置
+ENV_CONFIG = {
+    "uat": {
+        "name": "Uat测试环境 (Uat)",
+        "base_url": "https://search-ops-log-uat-hd4smt5lrsjtmbw2jxrd6k7mci.us-east-1.es.amazonaws.com/_dashboards",
+        "cookies_file": str(SCRIPT_DIR / "opensearch_cookies_alpha.json"),
+    },
+    "alpha": {
+        "name": "alpha测试环境 (Alpha)",
+        "base_url": "https://search-ops-log-alpha-swcyckhzgta27vf7coznkw4k44.ap-southeast-1.es.amazonaws.com/_dashboards",
+        "cookies_file": str(SCRIPT_DIR / "opensearch_cookies_alpha.json"),
+    },
+    "prod": {
+        "name": "线上环境 (Prod)",
+        "base_url": "https://search-ops-log-prod-xqytgli2pwcl6yfaqeew3363gi.us-east-1.es.amazonaws.com/_dashboards",
+        "cookies_file": str(SCRIPT_DIR / "opensearch_cookies_prod.json"),
+    },
+}
+
+
+def select_env():
+    """选择环境"""
+    print("\n请选择环境：")
+    print("  1. 🧪 alpha测试环境 (Alpha)")
+    print("  2. 🧪 uat测试环境 (Uat)")
+    print("  3. 🚀 线上环境 (Prod)")
+    choice = input("\n请输入选项 (1/2/3): ").strip()
+    if choice == "1":
+        return ENV_CONFIG["alpha"]
+    elif choice == "2":
+        return ENV_CONFIG["uat"]
+    return ENV_CONFIG["prod"]
+
+
+async def search_with_auto_login(query: str, username: str, password: str, env=None):
     """
     自动登录并搜索日志
 
@@ -26,7 +63,11 @@ async def search_with_auto_login(query: str, username: str, password: str):
         query: 搜索关键词
         username: SSO 用户名
         password: SSO 密码
+        env: 环境配置
     """
+    if env is None:
+        env = ENV_CONFIG["test"]
+
     async with async_playwright() as p:
         # 启动浏览器（可以设置 headless=True 无头模式）
         browser = await p.chromium.launch(headless=False)
@@ -34,10 +75,8 @@ async def search_with_auto_login(query: str, username: str, password: str):
         page = await context.new_page()
 
         # 1. 访问 OpenSearch Dashboards
-        print("正在访问 OpenSearch Dashboards...")
-        await page.goto(
-            'https://search-ops-log-alpha-swcyckhzgta27vf7coznkw4k44.ap-southeast-1.es.amazonaws.com/_dashboards'
-        )
+        print(f"正在访问 {env['name']} OpenSearch Dashboards...")
+        await page.goto(env['base_url'])
 
         # 2. 等待 SSO 登录页面加载
         print("等待 SSO 登录页面...")
@@ -78,8 +117,7 @@ async def search_with_auto_login(query: str, username: str, password: str):
         # 6. 访问 Discover 页面并搜索
         print(f"\n正在搜索: {query}")
         discover_url = (
-            'https://search-ops-log-alpha-swcyckhzgta27vf7coznkw4k44.ap-southeast-1.es.amazonaws.com/'
-            '_dashboards/app/discover#/?'
+            f"{env['base_url']}/app/discover#/?"
             '_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-10h,to:now))'
             f'&_a=(query:(language:kuery,query:\'{query}\'))'
         )
@@ -116,28 +154,34 @@ async def search_with_auto_login(query: str, username: str, password: str):
         await browser.close()
 
 
-async def search_with_saved_cookies(query: str):
+async def search_with_saved_cookies(query: str, env=None):
     """
     使用保存的 cookies 搜索（无需重新登录）
 
     参数:
         query: 搜索关键词
+        env: 环境配置
     """
+    if env is None:
+        env = ENV_CONFIG["test"]
+
+    cookies_file = env['cookies_file']
+
     # 读取保存的 cookies
     try:
-        with open('opensearch_cookies.json', 'r') as f:
+        with open(cookies_file, 'r') as f:
             content = f.read().strip()
             if not content:
-                print("❌ cookies 文件为空，请先手动登录获取 cookies")
+                print(f"❌ cookies 文件为空，请先手动登录获取 cookies ({cookies_file})")
                 return
             cookies = json.loads(content)
     except FileNotFoundError:
-        print("❌ 未找到保存的 cookies 文件 (opensearch_cookies.json)")
+        print(f"❌ 未找到保存的 cookies 文件 ({cookies_file})")
         print("请先手动登录或使用浏览器获取 cookies")
         return
     except json.JSONDecodeError as e:
         print(f"❌ cookies 文件格式错误: {e}")
-        print("请检查 opensearch_cookies.json 文件格式")
+        print(f"请检查 {cookies_file} 文件格式")
         return
 
     async with async_playwright() as p:
@@ -149,10 +193,9 @@ async def search_with_saved_cookies(query: str):
         page = await context.new_page()
 
         # 直接访问搜索页面
-        print(f"使用保存的 cookies 搜索: {query}")
+        print(f"使用保存的 cookies 搜索 [{env['name']}]: {query}")
         discover_url = (
-            'https://search-ops-log-alpha-swcyckhzgta27vf7coznkw4k44.ap-southeast-1.es.amazonaws.com/'
-            '_dashboards/app/discover#/?'
+            f"{env['base_url']}/app/discover#/?"
             '_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-10h,to:now))'
             f'&_a=(query:(language:kuery,query:\'{query}\'))'
         )
@@ -200,21 +243,29 @@ async def search_with_saved_cookies(query: str):
         await browser.close()
 
 
-async def get_cookies_only():
+async def get_cookies_only(env=None, interactive=True):
     """
     只获取 cookies，不执行搜索（推荐用于首次配置）
+
+    参数:
+        env: 环境配置
+        interactive: 是否交互模式，False 时跳过所有 input() 等待
     """
+    if env is None:
+        env = ENV_CONFIG["test"]
+
     async with async_playwright() as p:
         print("\n" + "=" * 80)
-        print("🔐 AWS OpenSearch Cookies 获取工具")
+        print(f"🔐 AWS OpenSearch Cookies 获取工具 [{env['name']}]")
         print("=" * 80)
         print("\n📝 说明：")
-        print("  1. 浏览器会自动打开 AWS OpenSearch Dashboards")
+        print(f"  1. 浏览器会自动打开 {env['name']} AWS OpenSearch Dashboards")
         print("  2. 请手动完成 SSO 登录")
-        print("  3. 登录成功后，cookies 会自动保存到 opensearch_cookies.json")
+        print(f"  3. 登录成功后，cookies 会自动保存到 {env['cookies_file']}")
         print("  4. 看到 'Cookies 已保存' 提示后，可以关闭浏览器\n")
 
-        input("按回车键继续...")
+        if interactive:
+            input("按回车键继续...")
 
         # 启动浏览器
         browser = await p.chromium.launch(headless=False)
@@ -222,10 +273,8 @@ async def get_cookies_only():
         page = await context.new_page()
 
         # 访问 OpenSearch Dashboards
-        print("\n正在打开 AWS OpenSearch Dashboards...")
-        await page.goto(
-            'https://search-ops-log-alpha-swcyckhzgta27vf7coznkw4k44.ap-southeast-1.es.amazonaws.com/_dashboards'
-        )
+        print(f"\n正在打开 {env['name']} AWS OpenSearch Dashboards...")
+        await page.goto(env['base_url'])
 
         print("\n⏳ 请在浏览器中完成登录...")
         print("💡 提示：登录成功后会自动检测并保存 cookies")
@@ -280,41 +329,51 @@ async def get_cookies_only():
         # 显示所有 cookie 名称（用于调试）
         print(f"\n📋 所有 cookies: {', '.join([c['name'] for c in cookies])}")
 
-        with open('opensearch_cookies.json', 'w') as f:
+        with open(env['cookies_file'], 'w') as f:
             json.dump(cookies, f, indent=2)
 
-        print("✅ Cookies 已保存到 opensearch_cookies.json")
+        print(f"✅ Cookies 已保存到 {env['cookies_file']}")
         print("\n下一步：")
         print("  - 配置 Claude Desktop 使用此 cookies 文件")
         print("  - 或运行此脚本测试搜索功能")
 
-        input("\n按回车键关闭浏览器...")
+        if interactive:
+            input("\n按回车键关闭浏览器...")
         await browser.close()
 
 
 if __name__ == "__main__":
-    print("\n" + "=" * 80)
-    print("🚀 AWS OpenSearch 自动化工具")
-    print("=" * 80)
-    print("\n请选择模式：")
-    print("  1. 🔐 获取 Cookies（首次使用或 cookies 过期）")
-    print("  2. 🔍 使用已保存的 Cookies 搜索日志")
-    print("  3. ❌ 退出")
-    print("=" * 80)
-
-    choice = input("\n请输入选项 (1/2/3): ").strip()
-
-    if choice == "1":
-        asyncio.run(get_cookies_only())
-    elif choice == "2":
-        # 检查 cookies 文件是否存在
-        if not os.path.exists('opensearch_cookies.json'):
-            print("\n❌ 未找到 opensearch_cookies.json 文件")
-            print("请先选择选项 1 获取 cookies")
-        else:
-            query = input("\n请输入搜索关键词 (默认: ERROR): ").strip() or "ERROR"
-            asyncio.run(search_with_saved_cookies(query=query))
-    elif choice == "3":
-        print("\n👋 再见！")
+    # 支持命令行非交互模式: python aws_opensearch_auto.py --auto-refresh <env>
+    if len(sys.argv) >= 3 and sys.argv[1] == "--auto-refresh":
+        env_key = sys.argv[2] if sys.argv[2] in ENV_CONFIG else "test"
+        env = ENV_CONFIG[env_key]
+        print(f"🔄 非交互模式：自动刷新 [{env['name']}] cookies...")
+        asyncio.run(get_cookies_only(env=env, interactive=False))
     else:
-        print("\n❌ 无效选项")
+        print("\n" + "=" * 80)
+        print("🚀 AWS OpenSearch 自动化工具")
+        print("=" * 80)
+        print("\n请选择模式：")
+        print("  1. 🔐 获取 Cookies（首次使用或 cookies 过期）")
+        print("  2. 🔍 使用已保存的 Cookies 搜索日志")
+        print("  3. ❌ 退出")
+        print("=" * 80)
+
+        choice = input("\n请输入选项 (1/2/3): ").strip()
+
+        if choice == "1":
+            env = select_env()
+            asyncio.run(get_cookies_only(env=env))
+        elif choice == "2":
+            env = select_env()
+            cookies_file = env['cookies_file']
+            if not os.path.exists(cookies_file):
+                print(f"\n❌ 未找到 {cookies_file} 文件")
+                print("请先选择选项 1 获取 cookies")
+            else:
+                query = input("\n请输入搜索关键词 (默认: ERROR): ").strip() or "ERROR"
+                asyncio.run(search_with_saved_cookies(query=query, env=env))
+        elif choice == "3":
+            print("\n👋 再见！")
+        else:
+            print("\n❌ 无效选项")

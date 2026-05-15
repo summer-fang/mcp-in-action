@@ -2,11 +2,15 @@
 # -*- coding: utf-8 -*-
 
 """
-MCP AWS OpenSearch 日志查询服务器（SSO 认证）
+MCP OpenSearch 日志查询服务器（多系统支持）
 
 提供日志查询工具：
-1. search_aws_logs: 在 AWS OpenSearch 中搜索日志（使用 cookies 认证）
+1. search_aws_logs: 在 OpenSearch 中搜索日志
 2. search_aws_logs_by_time: 指定时间范围搜索日志
+
+支持多系统认证：
+- crm: 使用用户名密码认证（HTTPBasicAuth）
+- test/prod (bts): 使用 SSO cookies 认证
 
 Author: FlyAIBox
 Date: 2026.04.24
@@ -18,10 +22,11 @@ import logging
 import requests
 import traceback
 import subprocess
-import sys
 from pathlib import Path
 from typing import Optional, Dict, Any
+from requests.auth import HTTPBasicAuth
 from mcp.server.fastmcp import FastMCP
+from dotenv import load_dotenv
 
 # 配置日志
 logging.basicConfig(
@@ -30,32 +35,58 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# 加载 .env 文件中的环境变量
+dotenv_path = Path(__file__).resolve().parents[1] / '.env'
+load_dotenv(dotenv_path)
+
 # 初始化 FastMCP 服务器
-mcp = FastMCP("aws-opensearch-logs")
+mcp = FastMCP("opensearch-logs")
 
-# AWS OpenSearch 配置
-AWS_OPENSEARCH_BASE_URL = "https://search-ops-log-alpha-swcyckhzgta27vf7coznkw4k44.ap-southeast-1.es.amazonaws.com"
-COOKIES_FILE = Path(__file__).parent.parent / "opensearch_cookies.json"
+# 多系统环境配置
+# auth_type: "cookie" 使用 SSO cookies 认证, "password" 使用用户名密码认证
+ENV_CONFIG = {
+    "uat": {
+        "name": "BTS UAT测试环境 (Uat)",
+        "base_url": "https://search-ops-log-uat-hd4smt5lrsjtmbw2jxrd6k7mci.us-east-1.es.amazonaws.com",
+        "auth_type": "cookie",
+        "cookies_file": Path(__file__).parent / "opensearch_cookies_uat.json",
+    },
+    "alpha": {
+        "name": "BTS Alpha测试环境 (Alpha)",
+        "base_url": "https://search-ops-log-alpha-swcyckhzgta27vf7coznkw4k44.ap-southeast-1.es.amazonaws.com",
+        "auth_type": "cookie",
+        "cookies_file": Path(__file__).parent / "opensearch_cookies_alpha.json",
+    },
+    "prod": {
+        "name": "BTS 线上环境 (Prod)",
+        "base_url": "https://search-ops-log-prod-xqytgli2pwcl6yfaqeew3363gi.us-east-1.es.amazonaws.com",
+        "auth_type": "cookie",
+        "cookies_file": Path(__file__).parent / "opensearch_cookies_prod.json",
+    },
+    "crm": {
+        "name": "CRM 环境",
+        "base_url": os.getenv("OPENSEARCH_BASE_URL", "https://opensearch.crm-prod.com"),
+        "auth_type": "password",
+        "username": os.getenv("OPENSEARCH_USERNAME"),
+        "password": os.getenv("OPENSEARCH_PASSWORD"),
+    },
+}
+DEFAULT_ENV = "alpha"
 
 
-class AWSOpenSearchClient:
-    """AWS OpenSearch 客户端（SSO 认证）"""
+class OpenSearchClient:
+    """OpenSearch 客户端（支持密码认证和 Cookie 认证）"""
 
-    def __init__(self, base_url: str, cookies: Dict[str, str] = None):
-        """
-        初始化客户端
-
-        参数:
-            base_url: OpenSearch 基础 URL
-            cookies: 从浏览器获取的 cookies 字典
-        """
+    def __init__(self, base_url: str, cookies: Dict[str, str] = None,
+                 username: str = None, password: str = None):
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()
 
-        if cookies:
+        if username and password:
+            self.session.auth = HTTPBasicAuth(username, password)
+        elif cookies:
             self.session.cookies.update(cookies)
 
-        # 通用 headers
         self.session.headers.update({
             'osd-xsrf': 'true',
             'Content-Type': 'application/json'
@@ -153,38 +184,37 @@ class AWSOpenSearchClient:
             return None
 
 
-# 全局客户端实例（懒加载）
-_aws_opensearch_client = None
+# 全局客户端实例（按环境懒加载）
+_opensearch_clients = {}
 # Cookie刷新脚本路径
 COOKIE_REFRESH_SCRIPT = Path(__file__).parent.parent / "server" / "aws_opensearch_auto.py"
 PYTHON_VENV = Path(__file__).parent.parent / "venv_mcp_demo" / "bin" / "python"
 
 
-def refresh_cookies() -> bool:
+def refresh_cookies(env: str = DEFAULT_ENV) -> bool:
     """
-    自动运行cookies刷新脚本
+    自动运行cookies刷新脚本（仅适用于 cookie 认证环境）
+    """
+    env_config = ENV_CONFIG.get(env, ENV_CONFIG[DEFAULT_ENV])
+    if env_config.get("auth_type") != "cookie":
+        return False
 
-    返回:
-        True: 刷新成功
-        False: 刷新失败
-    """
+    cookies_file = env_config["cookies_file"]
+
     try:
         logger.info("=" * 80)
-        logger.info("🔄 检测到 cookies 过期，正在自动刷新...")
+        logger.info(f"检测到 cookies 过期，正在自动刷新 [{env_config['name']}]...")
         logger.info(f"执行脚本: {COOKIE_REFRESH_SCRIPT}")
         logger.info("=" * 80)
 
-        # 执行刷新脚本（选项1：获取cookies）
         process = subprocess.Popen(
-            [str(PYTHON_VENV), "-u", str(COOKIE_REFRESH_SCRIPT)],
-            stdin=subprocess.PIPE,
+            [str(PYTHON_VENV), "-u", str(COOKIE_REFRESH_SCRIPT), "--auto-refresh", env],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
 
-        # 自动输入选项1（获取cookies）
-        stdout, stderr = process.communicate(input="1\n", timeout=300)
+        stdout, stderr = process.communicate(timeout=300)
 
         logger.info("刷新脚本输出:")
         logger.info(stdout)
@@ -192,45 +222,55 @@ def refresh_cookies() -> bool:
         if stderr:
             logger.warning(f"刷新脚本错误输出: {stderr}")
 
-        # 检查cookies文件是否更新成功
-        if COOKIES_FILE.exists():
-            logger.info("✅ Cookies 文件已更新，重新加载客户端...")
+        if cookies_file.exists():
+            logger.info("Cookies 文件已更新，重新加载客户端...")
             return True
         else:
-            logger.error("❌ Cookies 文件未生成")
+            logger.error("Cookies 文件未生成")
             return False
 
     except subprocess.TimeoutExpired:
-        logger.error("❌ Cookies 刷新超时（5分钟）")
+        logger.error("Cookies 刷新超时（5分钟）")
         process.kill()
         return False
     except Exception as e:
-        logger.error(f"❌ 刷新 cookies 失败: {e}")
+        logger.error(f"刷新 cookies 失败: {e}")
         logger.error(traceback.format_exc())
         return False
 
 
-def reload_client():
+def reload_client(env: str = DEFAULT_ENV):
     """重新加载客户端（清除缓存）"""
-    global _aws_opensearch_client
-    _aws_opensearch_client = None
+    global _opensearch_clients
+    _opensearch_clients.pop(env, None)
 
 
-def get_aws_opensearch_client() -> AWSOpenSearchClient:
-    """获取 AWS OpenSearch 客户端实例"""
-    global _aws_opensearch_client
-    if _aws_opensearch_client is None:
-        # 从文件加载 cookies
-        try:
-            with open(COOKIES_FILE, 'r') as f:
-                cookies_list = json.load(f)
-                # 转换为字典格式
-                cookies = {cookie['name']: cookie['value'] for cookie in cookies_list}
-                logger.info(f"已从 {COOKIES_FILE} 加载 {len(cookies)} 个 cookies")
-                _aws_opensearch_client = AWSOpenSearchClient(AWS_OPENSEARCH_BASE_URL, cookies)
-        except FileNotFoundError:
-            raise ValueError(f"未找到 cookies 文件: {COOKIES_FILE}，请先运行 aws_opensearch_auto.py 获取 cookies")
-    return _aws_opensearch_client
+def get_opensearch_client(env: str = DEFAULT_ENV) -> OpenSearchClient:
+    """获取 OpenSearch 客户端实例"""
+    global _opensearch_clients
+    if env not in _opensearch_clients:
+        env_config = ENV_CONFIG.get(env, ENV_CONFIG[DEFAULT_ENV])
+        base_url = env_config["base_url"]
+        auth_type = env_config.get("auth_type", "cookie")
+
+        if auth_type == "password":
+            username = env_config.get("username")
+            password = env_config.get("password")
+            if not username or not password:
+                raise ValueError(f"请在 .env 文件中配置 OPENSEARCH_USERNAME 和 OPENSEARCH_PASSWORD [{env_config['name']}]")
+            _opensearch_clients[env] = OpenSearchClient(base_url, username=username, password=password)
+            logger.info(f"已创建密码认证客户端 [{env_config['name']}]")
+        else:
+            cookies_file = env_config["cookies_file"]
+            try:
+                with open(cookies_file, 'r') as f:
+                    cookies_list = json.load(f)
+                    cookies = {cookie['name']: cookie['value'] for cookie in cookies_list}
+                    logger.info(f"已从 {cookies_file} 加载 {len(cookies)} 个 cookies [{env_config['name']}]")
+                    _opensearch_clients[env] = OpenSearchClient(base_url, cookies=cookies)
+            except FileNotFoundError:
+                raise ValueError(f"未找到 cookies 文件: {cookies_file}，请先运行 aws_opensearch_auto.py 获取 [{env_config['name']}] 的 cookies")
+    return _opensearch_clients[env]
 
 
 @mcp.tool()
@@ -238,16 +278,18 @@ def search_aws_logs(
     query: str,
     index_pattern: str = "*bts-bigaccount*",
     hours_ago: int = 1,
-    size: int = 20
+    size: int = 20,
+    env: str = "alpha"
 ) -> str:
     """
-    在 AWS OpenSearch 中搜索日志（使用 SSO cookies 认证）
+    在 OpenSearch 中搜索日志
 
     参数:
         query: 搜索关键词（支持 Lucene 查询语法，如 "ERROR", "exception", "traceId:abc123"）
         index_pattern: 索引模式，默认 "*bts-bigaccount*"
         hours_ago: 查询最近多少小时的日志，默认 1 小时
         size: 返回结果数量，默认 20（最大建议不超过 50）
+        env: 环境选择: "crm" CRM系统（密码认证）, "alpha" BTS Alpha测试环境（默认，cookie认证）, "uat" BTS UAT测试环境, "prod" BTS线上环境（cookie认证）
 
     返回:
         格式化的日志搜索结果
@@ -255,10 +297,27 @@ def search_aws_logs(
     示例:
         - search_aws_logs("ERROR")
         - search_aws_logs("exception", index_pattern="*app*", hours_ago=2)
-        - search_aws_logs("9a18bc0641e4444397e57f87007489bc")
+        - search_aws_logs("9a18bc0641e4444397e57f87007489bc", env="prod")
+        - search_aws_logs("error OR exception", index_pattern="fluentd-app-*", env="crm")
     """
     try:
-        client = get_aws_opensearch_client()
+        try:
+            client = get_opensearch_client(env)
+        except ValueError:
+            env_config = ENV_CONFIG.get(env, ENV_CONFIG[DEFAULT_ENV])
+            if env_config.get("auth_type") == "password":
+                return f"配置错误: 请在 .env 文件中配置 OPENSEARCH_USERNAME 和 OPENSEARCH_PASSWORD"
+            logger.warning(f"cookies 文件不存在，尝试自动刷新 [{env}]...")
+            if refresh_cookies(env):
+                reload_client(env)
+                client = get_opensearch_client(env)
+            else:
+                return (
+                    f"配置错误: cookies 文件不存在且自动刷新失败\n"
+                    f"请手动运行以下命令获取 cookies：\n"
+                    f"python {COOKIE_REFRESH_SCRIPT}\n"
+                    f"然后重试搜索"
+                )
 
         # 计算时间范围
         time_from = f"now-{hours_ago}h"
@@ -272,15 +331,23 @@ def search_aws_logs(
         )
 
         if not result:
-            logger.warning("首次搜索失败，尝试自动刷新 cookies...")
+            env_config = ENV_CONFIG.get(env, ENV_CONFIG[DEFAULT_ENV])
+            if env_config.get("auth_type") == "password":
+                return (
+                    f"搜索失败\n"
+                    f"可能原因：\n"
+                    f"1. 用户名或密码错误，请检查 .env 配置\n"
+                    f"2. 网络连接问题\n"
+                    f"3. 索引模式不存在: {index_pattern}\n"
+                    f"4. OpenSearch 服务异常"
+                )
 
-            # 自动刷新cookies
-            if refresh_cookies():
-                # 重新加载客户端
-                reload_client()
-                client = get_aws_opensearch_client()
+            logger.warning(f"首次搜索失败，尝试自动刷新 cookies [{env}]...")
 
-                # 重试搜索
+            if refresh_cookies(env):
+                reload_client(env)
+                client = get_opensearch_client(env)
+
                 logger.info("重新尝试搜索...")
                 result = client.search(
                     query=query,
@@ -291,7 +358,7 @@ def search_aws_logs(
 
                 if not result:
                     return (
-                        f"❌ 刷新 cookies 后仍然搜索失败\n"
+                        f"刷新 cookies 后仍然搜索失败\n"
                         f"可能原因：\n"
                         f"1. 网络连接问题\n"
                         f"2. 索引模式不存在: {index_pattern}\n"
@@ -299,7 +366,7 @@ def search_aws_logs(
                     )
             else:
                 return (
-                    f"❌ 搜索失败且无法自动刷新 cookies\n"
+                    f"搜索失败且无法自动刷新 cookies\n"
                     f"请手动运行以下命令获取 cookies：\n"
                     f"python {COOKIE_REFRESH_SCRIPT}\n"
                     f"然后重试搜索"
@@ -366,10 +433,11 @@ def search_aws_logs_by_time(
     time_from: str,
     time_to: str = "now",
     index_pattern: str = "*bts-bigaccount*",
-    size: int = 20
+    size: int = 20,
+    env: str = "alpha"
 ) -> str:
     """
-    在 AWS OpenSearch 中按指定时间范围搜索日志
+    在 OpenSearch 中按指定时间范围搜索日志
 
     参数:
         query: 搜索关键词
@@ -377,16 +445,34 @@ def search_aws_logs_by_time(
         time_to: 结束时间，默认 "now"
         index_pattern: 索引模式
         size: 返回结果数量
+        env: 环境选择: "crm" CRM系统（密码认证）, "alpha" BTS Alpha测试环境（默认，cookie认证）, "uat" BTS UAT测试环境, "prod" BTS线上环境（cookie认证）
 
     返回:
         格式化的日志搜索结果
 
     示例:
         - search_aws_logs_by_time("ERROR", "now-12h", "now-6h")
-        - search_aws_logs_by_time("exception", "2026-04-24T00:00:00", "2026-04-24T12:00:00")
+        - search_aws_logs_by_time("exception", "2026-04-24T00:00:00", "2026-04-24T12:00:00", env="prod")
+        - search_aws_logs_by_time("timeout", "now-3h", env="crm")
     """
     try:
-        client = get_aws_opensearch_client()
+        try:
+            client = get_opensearch_client(env)
+        except ValueError:
+            env_config = ENV_CONFIG.get(env, ENV_CONFIG[DEFAULT_ENV])
+            if env_config.get("auth_type") == "password":
+                return f"配置错误: 请在 .env 文件中配置 OPENSEARCH_USERNAME 和 OPENSEARCH_PASSWORD"
+            logger.warning(f"cookies 文件不存在，尝试自动刷新 [{env}]...")
+            if refresh_cookies(env):
+                reload_client(env)
+                client = get_opensearch_client(env)
+            else:
+                return (
+                    f"配置错误: cookies 文件不存在且自动刷新失败\n"
+                    f"请手动运行以下命令获取 cookies：\n"
+                    f"python {COOKIE_REFRESH_SCRIPT}\n"
+                    f"然后重试搜索"
+                )
 
         # 执行搜索
         result = client.search(
@@ -398,15 +484,23 @@ def search_aws_logs_by_time(
         )
 
         if not result:
-            logger.warning("首次搜索失败，尝试自动刷新 cookies...")
+            env_config = ENV_CONFIG.get(env, ENV_CONFIG[DEFAULT_ENV])
+            if env_config.get("auth_type") == "password":
+                return (
+                    f"搜索失败\n"
+                    f"可能原因：\n"
+                    f"1. 用户名或密码错误，请检查 .env 配置\n"
+                    f"2. 网络连接问题\n"
+                    f"3. 索引模式不存在: {index_pattern}\n"
+                    f"4. OpenSearch 服务异常"
+                )
 
-            # 自动刷新cookies
-            if refresh_cookies():
-                # 重新加载客户端
-                reload_client()
-                client = get_aws_opensearch_client()
+            logger.warning(f"首次搜索失败，尝试自动刷新 cookies [{env}]...")
 
-                # 重试搜索
+            if refresh_cookies(env):
+                reload_client(env)
+                client = get_opensearch_client(env)
+
                 logger.info("重新尝试搜索...")
                 result = client.search(
                     query=query,
@@ -418,7 +512,7 @@ def search_aws_logs_by_time(
 
                 if not result:
                     return (
-                        f"❌ 刷新 cookies 后仍然搜索失败\n"
+                        f"刷新 cookies 后仍然搜索失败\n"
                         f"可能原因：\n"
                         f"1. 网络连接问题\n"
                         f"2. 索引模式不存在: {index_pattern}\n"
@@ -426,7 +520,7 @@ def search_aws_logs_by_time(
                     )
             else:
                 return (
-                    f"❌ 搜索失败且无法自动刷新 cookies\n"
+                    f"搜索失败且无法自动刷新 cookies\n"
                     f"请手动运行以下命令获取 cookies：\n"
                     f"python {COOKIE_REFRESH_SCRIPT}\n"
                     f"然后重试搜索"
@@ -463,14 +557,14 @@ def search_aws_logs_by_time(
 
 
 if __name__ == "__main__":
-    logger.info("正在启动 MCP AWS OpenSearch 日志服务器（SSO 认证）...")
-    logger.info(f"AWS OpenSearch URL: {AWS_OPENSEARCH_BASE_URL}")
-    logger.info(f"Cookies 文件: {COOKIES_FILE}")
+    logger.info("正在启动 MCP OpenSearch 日志服务器（多系统支持）...")
+    for env_key, env_val in ENV_CONFIG.items():
+        auth_info = env_val.get("auth_type", "cookie")
+        logger.info(f"  [{env_key}] {env_val['name']}: {env_val['base_url']} (认证: {auth_info})")
     logger.info("提供工具:")
     logger.info("  - search_aws_logs: 搜索日志（按小时范围）")
     logger.info("  - search_aws_logs_by_time: 搜索日志（自定义时间范围）")
-    logger.info("\n⚠️  注意: 如果 cookies 过期，请运行 aws_opensearch_auto.py 重新获取")
+    logger.info("支持环境: crm(密码认证), test(cookie认证), prod(cookie认证)")
     logger.info("使用 Ctrl+C 停止服务器\n")
 
-    # 初始化并运行服务器
     mcp.run(transport='stdio')
