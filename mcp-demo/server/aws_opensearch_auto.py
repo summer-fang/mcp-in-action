@@ -26,7 +26,7 @@ ENV_CONFIG = {
     "uat": {
         "name": "Uat测试环境 (Uat)",
         "base_url": "https://search-ops-log-uat-hd4smt5lrsjtmbw2jxrd6k7mci.us-east-1.es.amazonaws.com/_dashboards",
-        "cookies_file": str(SCRIPT_DIR / "opensearch_cookies_alpha.json"),
+        "cookies_file": str(SCRIPT_DIR / "opensearch_cookies_uat.json"),
     },
     "alpha": {
         "name": "alpha测试环境 (Alpha)",

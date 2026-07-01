@@ -1,0 +1,172 @@
+[
+  {
+    "name": "security_authentication",
+    "value": "Fe26.2**7ae62156b4ee1aabe467176f6095112a3be3c1a90e5a14530e6951cd92be67fc*5hxhCSg0Y7C5R6Axbn5smA*fCEUyyw2eRvPGXKXNsQzZPspgt2mCazBZ9Tbhhf8kJbDIOS6fP-3lfw0Ff78jnt009eC8HnHdrSXyu7kU0fhahTq5lLSrIUQIUwc6MS66kAkMJiwtEEzRRmL_i5SD3I5dSW8odw0G_nZ8O5NrdS6a72uaCRNe9N9kACTUq2ogPKBqdaMh4gEAJFzEJFZSFYjSEV0669B4KGbnZQf24ZdTXtYxt8s7LTwNn7X1UgSGtsZdkbBsExeRhlzy0pMg6Pp87VLV4jlxFb8XqZPOgBHImZFYUGdQcbSswuxwQY0FTP4Xl1rQg18dmfs-oUUpunIB_3QLodVAy1yYtJ7MUTSCFyj8MgiWW_DiR6DjpYJQSLaKt5rhmKorGOvo9yYeLr7oaqKYuoy0N5flzzRqSNpfix966LM0e8MGoeDnklCUlR9b8PaG6TEXqvnHwSC5FGuL6gn_fqA94hap4SO665oa1AS25Hg9NIPwMLJ-4Mz_HPOMZTjG78M64BCmkiD4Xs-wdJGyLrA7Dt8bKQqIe-sM-D12XhGsYIx358GdMYROBG54iI860jv3Iu_8x6goKSf**9cbe9de1a9d2459eb97264078bf42fb09128770f0200852b7153f91e61e55a38*6sA4CfSYC48cfdkzItA4h1642RHqS5z2tD51KAKB3g4",
+    "domain": "search-ops-log-prod-xqytgli2pwcl6yfaqeew3363gi.us-east-1.es.amazonaws.com",
+    "path": "/_dashboards",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "STATE-TOKEN",
+    "value": "52a4e89f-861d-42e0-9551-f4c02914e1d5",
+    "domain": ".search-ops-log-prod-xqytgli2pwcl6yfaqeew3363gi.us-east-1.es.amazonaws.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "lang",
+    "value": "en",
+    "domain": "us-east-1ytknkpxd8.auth.us-east-1.amazoncognito.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "page-data",
+    "value": "eyJwYWdlLWRhdGEiOnsiY2hhbGxlbmdlUGFyYW1ldGVycyI6eyJzaWduSW4iOnsiaWRlbnRpdHlQcm92aWRlcnMiOnsiY29nbml0byI6eyJzaWduSW5BdHRyaWJ1dGVzIjpbInVzZXJuYW1lIiwiZW1haWwiXSwicmVxdWlyZVBhc3N3b3JkIjpmYWxzZX19fSwicmVxdWVzdFJlc2V0UGFzc3dvcmQiOnsiY29nbml0b0lkZW50aXR5UHJvdmlkZXIiOnsic2lnbkluQXR0cmlidXRlcyI6WyJ1c2VybmFtZSIsImVtYWlsIl0sInJlcXVpcmVQYXNzd29yZCI6ZmFsc2V9fX0sImNsaWVudElkIjoiNmQzcjEwc2RxNTF1YWg1dW4zY3B2Z2kxdm4ifX0%3D.NzuVeJ%2F%2F6bEO63%2BotJEeFvVHurfIV3E0lQsXI76cSVQ",
+    "domain": "us-east-1ytknkpxd8.auth.us-east-1.amazoncognito.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Strict"
+  },
+  {
+    "name": "XSRF-TOKEN",
+    "value": "7acde331-ab1d-4b30-acd2-6b5c72a7923c",
+    "domain": "us-east-1ytknkpxd8.auth.us-east-1.amazoncognito.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "organizationTheme",
+    "value": "null",
+    "domain": "sso.bit-prod.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "organizationLogo",
+    "value": "https://opensearch.org/wp-content/uploads/2024/08/opensearch_logo_default.svg",
+    "domain": "sso.bit-prod.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "organizationFootHtml",
+    "value": "",
+    "domain": "sso.bit-prod.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "jsonWebConfig",
+    "value": "{\"showGithubCorner\":false,\"forceLanguage\":\"en\",\"defaultLanguage\":\"en\",\"isDemoMode\":false,\"staticBaseUrl\":\"https://cdn.casbin.org\",\"aiAssistantUrl\":\"\",\"defaultApplication\":\"app-built-in\",\"maxItemsForFlatMenu\":7}",
+    "domain": "sso.bit-prod.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "__cf_bm",
+    "value": "Y7grG47WBsrM4jAqj_wV8hmT1ME5yr9JyJdBrhj5NPU-1780996225.7650828-1.0.1.1-9Hv2SVOBhoxhWdtR37ZU_w09OrtChxDiJpNtLplpotCbSYMPyziaK_LB44ftH.9yHO4rresVH_wzIVReaazLkF.5oxFS9ZFo.KEG8eKyLmhgOBqnYqL5wakuGY8m6EK7",
+    "domain": ".bit-prod.com",
+    "path": "/",
+    "expires": 1780998026.199395,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "casdoor_session_id",
+    "value": "c005a718192f5ff03c8a6d4afa0a8452",
+    "domain": "sso.bit-prod.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "AWSALBTGCORS",
+    "value": "WJVrtZGMrdO27+5I4jh987K0r5+/PbK9OHvYyHVnZudk0IdcCw0J3aUfgYgDBRF1faRtABJZU2wP7BOhm3TThwhyooBIRkQ3EN8sT1j8PmEN7DD9+ZzmxdKTrGAP2Q2PZhea3yyE5ThHdd1M8HcYcDkKG7J8Zsj0GQn5TweN6blW/LBOR6k=",
+    "domain": "www.hytechc.com",
+    "path": "/",
+    "expires": 1781601029.426571,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "__cf_bm",
+    "value": "kX46azCAndgAuPQUXPpEGEPD7vCwOYG_qbB9qGKnWxQ-1780996229.4677274-1.0.1.1-OiOutIKufyHm7PJEW.NmN0wrcw3LgcGuq_9Qp8AuaEURN6_bT47RwrW6zKAB9L5Wre8cLSv.99xHAq8usKMjQ1AA5wzYzrEfz6mhx2DAvzvxQ77hMS5fW3X85_iRhiu2",
+    "domain": ".hytechc.com",
+    "path": "/",
+    "expires": 1780998029.426591,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "cognito",
+    "value": "\"H4sIAAAAAAAAAAEGAfn+zOFzc9gWoFi9ko9OL85YB7+vPL1x+D/HNpBu3x4XzaylCHTenZuOR44dBRki8ceVXYJWXEsiKQOsEGVWAjlPA4e8b46qIt/+WRoYW5UQ/6/jyjfEbjTICnKSQ0PptL8k37IQHquLoqfWavuKQcCRq2NipWcMCJJVegSLOQoEvbCvU3MzM6DxXy+yDeySpZ1ca3s/5vnuyG6SRSPY1FvYAv0vEg8WQ+JCpY+E4bvtTjtZqA1Y4xwdPm37fgrKUCu7Ij2fDiaJJk1AYjpV/8yR87A+oEsqNFGRLmHH/PQOfHBtxaf0nW/KY92MvIWf/TBbHvh/zECytCBSKL5YNmXMPyqlmy/VYCr94xQGAQAA.H4sIAAAAAAAAANObbxfdERyu/vvZJA8dPc2NdRFO84ryH2hHu85hk/O66ggA3LWV6CAAAAA=.4\"",
+    "domain": ".us-east-1ytknkpxd8.auth.us-east-1.amazoncognito.com",
+    "path": "/",
+    "expires": 1780999845.727504,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "ID-TOKEN",
+    "value": "eyJraWQiOiJZWnpMZDhIaStDbmNnVVRnbWViSWNncW5uVjFLNk9jRm15MGp0cWFvTGFvPSIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoibTJTYTdwU1VBNzFSNU1ENkxhLWo3ZyIsInN1YiI6ImU0NThkNDY4LTIwNzEtNzA5Ni01ZTRlLTQ3MjQ0ZGI0MWEwOCIsImNvZ25pdG86Z3JvdXBzIjpbInVzLWVhc3QtMV9ZdGtOS3B4RDhfY2FzZG9vciJdLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImlzcyI6Imh0dHBzOi8vY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20vdXMtZWFzdC0xX1l0a05LcHhEOCIsImNvZ25pdG86dXNlcm5hbWUiOiJjYXNkb29yX2UxNGZlM2EzLTlhNmEtNGU1Ny1iY2ZhLTdlODgxM2QyNWNhNCIsIm5vbmNlIjoiVWh5aVlwOV81UnJ2TDVNbGdvM0ZqUzRKRWQxRlVKTGNIWTQ4aDE0Z0J6QUswX3M3OEsybXpGS0RfRzFQdThLRDdSXzA1eHd0UlR3UlZWQlpyWmcyWG5GdlN0c1pMWkpMNUJ3SjROTjVDMGJFZzVwNkczV3AzOUhvVnRpdHRWdWR1ZEwwOENnM1Q3RENSNUtLTU01LXMyd1Mtb2dDWG1uZ1FSVjctYTdzWlhzIiwib3JpZ2luX2p0aSI6Ijg4ZDU2YTg4LTk1MzgtNDI3ZC04M2ZhLWVlNzBhODMzZmI5OSIsImNvZ25pdG86cm9sZXMiOlsiYXJuOmF3czppYW06Ojk3NzA5OTAyNTc4ODpyb2xlL09TUHJvZFJlYWRPbmx5VXNlclJvbGUiXSwiYXVkIjoiNmQzcjEwc2RxNTF1YWg1dW4zY3B2Z2kxdm4iLCJpZGVudGl0aWVzIjpbeyJkYXRlQ3JlYXRlZCI6IjE3NjUxODYxNTM4NjEiLCJ1c2VySWQiOiJlMTRmZTNhMy05YTZhLTRlNTctYmNmYS03ZTg4MTNkMjVjYTQiLCJwcm92aWRlck5hbWUiOiJjYXNkb29yIiwicHJvdmlkZXJUeXBlIjoiT0lEQyIsImlzc3VlciI6bnVsbCwicHJpbWFyeSI6InRydWUifV0sInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNzgwOTk2MjQ2LCJuYW1lIjoiTGVvIEZhbmciLCJleHAiOjE3ODA5OTk4NDYsImlhdCI6MTc4MDk5NjI0NiwianRpIjoiM2U3NTlhNDUtYWYwNy00YzVjLWEzODUtMGMzNGMyZThlYjBhIiwiZW1haWwiOiJsZW8uZmFuZ0BoeXRlY2hjLmNvbSJ9.X29lQOXVwjCDXr1Ak_QJhoYu_X-_yYEVcYDpjTjGFbCruzglHHEvjKvG8mwmGwBen2xywrWNjvwpdlzoQ4PrxFMUdXP-4lehLvB83HCNuDYDk0i8AqbWgZAObiutOOGpyJ6yAXCM12bioR31X6iQTzJfgAS-QDVEwIySjPaTm3H9MXVw9mJ37fyJtdQJe54-fr4D6MYj_yf3QzIkpWuqDkKi5BJEMQas09VFq6NF98ASVk2winFCNMmJ8fzZ20TTZ2Bima4eKI-oITof5lRrLydTXtzOZZq0pyscBfD-LiQMz_ehOouMflOF7rGwLHgmJdtSaWqDqAOefOHLWFPf5Q",
+    "domain": ".search-ops-log-prod-xqytgli2pwcl6yfaqeew3363gi.us-east-1.es.amazonaws.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "REFRESH-TOKEN",
+    "value": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.cH_JESTEm-CGRC3T_i1_fZrYq6kbboKL7sAXyz3c5Zt6TwoOPyL1cqrkuBEFkKzOOWZDwusAVIgpi3qG1JJJSIMJMv9_nZHO01TdyOWShi9mMrcE9qav49SR581PnpgpbncR4ldqpXCNro5i0fziTcvsyFXGBp_E9N-Dms0BbsM4mVNI8oOAJdLWVZ2GWzEdhzFsI5QSe5ysb4wrd2zoI-5XsD-P6n77Au-h-eMdN5R3yYUjZnqcRobAXYoBP5-nW8MTiA0SBPslR0k0ocHAgbU0sQOol-b7QgZMaBPaKtvltHv6NKq64q50nwcNMaOAfHTEMOiyiyVfDe8SSjlMzQ.8F6eVuiNaee6358C.G3g-p3suejpM1NpHp7WeOLhkLy7Au5ExSceeoIBlLy3ZzxeQYllz4KbKv08kZKw8DRoQPQs1djvnlIKeQr7OCdzEkYyHAkndKyku7aH22EpIJseqto6uWyOXGEOp_1d5Qel8nW4H1iuRipYMcOkFL2Jl8tCIu4RJGd8xgkuZzv6gvQ9haxqRbA8sEHS7wSOVEOuy7VyxNJfMsc9VA0LJrEbG3YlZ7pg9NsKe77kkwDmuZ8FNqohwe7YSQDeTz4yzYzh-NYyY9Jp5LZMB3ZLgyzEGFpOulYw4C3DAioV2E9_7khcKyp7UGQG_XS26cepBmNyB7YQRHDLSLSwe4bfEsOe-6ganpyyuC1tcbedxZG7OTqdjTHzF4ZdNuq60EI8TBGN67NxiVmkalC2muKXlgGwyEMLGNnZsJ4injUJPB16JBk7uYIBQqWMDJUalOaeEjcxIRz0urSFabGcOTXcw3cZGEGR800rLUvXGVUcoaDsE8hKkVhnijClxDDtKHVg0wAjYaZzChv_FKVcJOi0SuRYt4gho_WdaQ49HGJ-ff5PU4KZab1mPiAgvIQKzuAl0_ypbb6QPY4HMHEWGSfgkWqKVvkB-jypFonbqUcpJst2Cnf7WljYoefzrZysUmrMaEllp5a4dnX6RpZ_qNlc6_wvQQXbh0o3Pa1CD9EQjzgh1U1_8IzhaOqeC5LDwztWIFMpOIh0VxPb16aX64gN72rC37wbx2gcsSZYcNUgYkpr1TbmGF5xMNHECz8jtXShksSArugl25I-gOEiF8-MObxZ2mYakYu-ReI9GGKdNgPkjFqceFmE5Uzg4k9Wwx4xCBQwKfU_xjHj0ErKgvLQR2M7-JZgzscswm8YjUfZW2P9RPI6teQiO3hci2Iu93RRPuZBb33G6rsktAUvKL6LpNdEm1Ri3HJG7Cz6atQP0bJb3kX-jqNs2czwRxUAfG51W35lcCc-QWCtDkSqG17UW1Y_KLgTLvpA3KEFJ5AI0GoxHSpgu-OCfRo9bGIrfzefq2AvnaJDTrIchFL7lJRhYzc3MJz9cL09NKfcRvNNho-e4rECgIyDl8vO3x5-fCsUs2oR95LtnHoIFULqp6lvabsiTXvlS_04onjzpmLyOXOsgtZpGH_bAaalPX_GIdtIAT_jCS6ycWx6qfnhXa1I-ss1uzBVZDcvopGdDeuDj0jZ_hc6FYXOkGHXt1Y1rAj7k4uGi9Oz5N1Q5UXULD-lkZpQIeD00FbQCQFpLx4xu-lY0Up4o662o0o_e7g.4GbGQ2Q6Vi_OYZAXsLQxaA",
+    "domain": ".search-ops-log-prod-xqytgli2pwcl6yfaqeew3363gi.us-east-1.es.amazonaws.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "ACCESS-TOKEN",
+    "value": "eyJraWQiOiJpQWRKZmRoSWVFVjUvSUJjRHhSSEQrMXZDZ1JIVi95a0RsZzQ5Qm1oVlB3PSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJlNDU4ZDQ2OC0yMDcxLTcwOTYtNWU0ZS00NzI0NGRiNDFhMDgiLCJjb2duaXRvOmdyb3VwcyI6WyJ1cy1lYXN0LTFfWXRrTktweEQ4X2Nhc2Rvb3IiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbS91cy1lYXN0LTFfWXRrTktweEQ4IiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiNmQzcjEwc2RxNTF1YWg1dW4zY3B2Z2kxdm4iLCJvcmlnaW5fanRpIjoiODhkNTZhODgtOTUzOC00MjdkLTgzZmEtZWU3MGE4MzNmYjk5IiwidG9rZW5fdXNlIjoiYWNjZXNzIiwic2NvcGUiOiJwaG9uZSBvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF1dGhfdGltZSI6MTc4MDk5NjI0NiwiZXhwIjoxNzgwOTk5ODQ2LCJpYXQiOjE3ODA5OTYyNDYsImp0aSI6IjVkODVhYWMzLTVjM2YtNDgxZC05MGI1LWQyODVmYjY2ZDY2MSIsInVzZXJuYW1lIjoiY2FzZG9vcl9lMTRmZTNhMy05YTZhLTRlNTctYmNmYS03ZTg4MTNkMjVjYTQifQ.TMXy1bDeq42awYxfNOUuMFMLDj6vOVPvMenvfKERyj_ylUn7NpCGRTkHQeribSGOV9ePxFBYJsNt-o9B-SlxEFXF03HJyIrAqPu3vVIQtbSw3YSNDByaZgcd6-tGivkA_tnmHG3lsnpE23ommpTCQkMpDppTCDe4qlJKq5dxrbghtgHh4vSq1Pj2q1c6kgsBr1b70AwZxQ3vyBXY7DLhoCeVr0d9Aofdj2vEPUZzOmqvJaOAFXhQ3Wgoi_Ib2FUPyiswPtTei4yeJV7BKQfVWefDHsthSLGKSoI_VyhgdVYuxtbKiT6mEjyuXwm-Q6Lxnm3TlfsPBZO7J0fEoAugRw",
+    "domain": ".search-ops-log-prod-xqytgli2pwcl6yfaqeew3363gi.us-east-1.es.amazonaws.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  }
+]

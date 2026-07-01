@@ -17,11 +17,12 @@ Date: 2026.04.24
 """
 
 import os
+import sys
 import json
+import asyncio
 import logging
 import requests
 import traceback
-import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any
 from requests.auth import HTTPBasicAuth
@@ -186,14 +187,16 @@ class OpenSearchClient:
 
 # 全局客户端实例（按环境懒加载）
 _opensearch_clients = {}
-# Cookie刷新脚本路径
-COOKIE_REFRESH_SCRIPT = Path(__file__).parent.parent / "server" / "aws_opensearch_auto.py"
-PYTHON_VENV = Path(__file__).parent.parent / "venv_mcp_demo" / "bin" / "python"
+
+
+# 导入 aws_opensearch_auto 的 get_cookies_only 和环境配置
+from aws_opensearch_auto import get_cookies_only as _auto_get_cookies, ENV_CONFIG as _AUTO_ENV_CONFIG
 
 
 def refresh_cookies(env: str = DEFAULT_ENV) -> bool:
     """
-    自动运行cookies刷新脚本（仅适用于 cookie 认证环境）
+    自动获取 cookies（直接调用 Playwright 登录流程，非交互模式）。
+    会弹出浏览器窗口完成 SSO 登录，登录成功后自动保存 cookies。
     """
     env_config = ENV_CONFIG.get(env, ENV_CONFIG[DEFAULT_ENV])
     if env_config.get("auth_type") != "cookie":
@@ -201,40 +204,29 @@ def refresh_cookies(env: str = DEFAULT_ENV) -> bool:
 
     cookies_file = env_config["cookies_file"]
 
+    # 映射到 aws_opensearch_auto 的环境配置
+    auto_env = _AUTO_ENV_CONFIG.get(env)
+    if not auto_env:
+        logger.error(f"aws_opensearch_auto 中未找到环境配置: {env}")
+        return False
+
     try:
         logger.info("=" * 80)
-        logger.info(f"检测到 cookies 过期，正在自动刷新 [{env_config['name']}]...")
-        logger.info(f"执行脚本: {COOKIE_REFRESH_SCRIPT}")
+        logger.info(f"检测到 cookies 不存在或过期，正在自动获取 [{env_config['name']}]...")
+        logger.info("将打开浏览器完成 SSO 登录，请在浏览器中完成认证")
         logger.info("=" * 80)
 
-        process = subprocess.Popen(
-            [str(PYTHON_VENV), "-u", str(COOKIE_REFRESH_SCRIPT), "--auto-refresh", env],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-
-        stdout, stderr = process.communicate(timeout=300)
-
-        logger.info("刷新脚本输出:")
-        logger.info(stdout)
-
-        if stderr:
-            logger.warning(f"刷新脚本错误输出: {stderr}")
+        asyncio.run(_auto_get_cookies(env=auto_env, interactive=False))
 
         if cookies_file.exists():
-            logger.info("Cookies 文件已更新，重新加载客户端...")
+            logger.info("Cookies 文件已生成，重新加载客户端...")
             return True
         else:
-            logger.error("Cookies 文件未生成")
+            logger.error("Cookies 文件未生成，SSO 登录可能未完成")
             return False
 
-    except subprocess.TimeoutExpired:
-        logger.error("Cookies 刷新超时（5分钟）")
-        process.kill()
-        return False
     except Exception as e:
-        logger.error(f"刷新 cookies 失败: {e}")
+        logger.error(f"自动获取 cookies 失败: {e}")
         logger.error(traceback.format_exc())
         return False
 
