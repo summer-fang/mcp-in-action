@@ -23,6 +23,7 @@ import asyncio
 import logging
 import requests
 import traceback
+import threading
 from pathlib import Path
 from typing import Optional, Dict, Any
 from requests.auth import HTTPBasicAuth
@@ -216,7 +217,24 @@ def refresh_cookies(env: str = DEFAULT_ENV) -> bool:
         logger.info("将打开浏览器完成 SSO 登录，请在浏览器中完成认证")
         logger.info("=" * 80)
 
-        asyncio.run(_auto_get_cookies(env=auto_env, interactive=False))
+        # asyncio.run() 不能在已有 event loop 中调用（MCP server 基于 asyncio），
+        # 所以在新线程中启动独立 event loop 执行 Playwright 登录
+        result_holder = [False]
+        def _run_in_thread():
+            try:
+                asyncio.run(_auto_get_cookies(env=auto_env, interactive=False))
+                result_holder[0] = True
+            except Exception as e:
+                logger.error(f"线程内获取 cookies 失败: {e}")
+                logger.error(traceback.format_exc())
+
+        t = threading.Thread(target=_run_in_thread)
+        t.start()
+        t.join(timeout=330)
+
+        if not result_holder[0]:
+            logger.error("获取 cookies 超时或失败")
+            return False
 
         if cookies_file.exists():
             logger.info("Cookies 文件已生成，重新加载客户端...")
@@ -307,7 +325,7 @@ def search_aws_logs(
                 return (
                     f"配置错误: cookies 文件不存在且自动刷新失败\n"
                     f"请手动运行以下命令获取 cookies：\n"
-                    f"python {COOKIE_REFRESH_SCRIPT}\n"
+                    f"python aws_opensearch_auto.py\n"
                     f"然后重试搜索"
                 )
 
@@ -360,7 +378,7 @@ def search_aws_logs(
                 return (
                     f"搜索失败且无法自动刷新 cookies\n"
                     f"请手动运行以下命令获取 cookies：\n"
-                    f"python {COOKIE_REFRESH_SCRIPT}\n"
+                    f"python aws_opensearch_auto.py\n"
                     f"然后重试搜索"
                 )
 
@@ -462,7 +480,7 @@ def search_aws_logs_by_time(
                 return (
                     f"配置错误: cookies 文件不存在且自动刷新失败\n"
                     f"请手动运行以下命令获取 cookies：\n"
-                    f"python {COOKIE_REFRESH_SCRIPT}\n"
+                    f"python aws_opensearch_auto.py\n"
                     f"然后重试搜索"
                 )
 
@@ -514,7 +532,7 @@ def search_aws_logs_by_time(
                 return (
                     f"搜索失败且无法自动刷新 cookies\n"
                     f"请手动运行以下命令获取 cookies：\n"
-                    f"python {COOKIE_REFRESH_SCRIPT}\n"
+                    f"python aws_opensearch_auto.py\n"
                     f"然后重试搜索"
                 )
 
